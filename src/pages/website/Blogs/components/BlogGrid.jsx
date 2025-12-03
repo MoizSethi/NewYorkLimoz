@@ -1,3 +1,5 @@
+// src/pages/website/Blogs/components/BlogGrid.jsx
+import React from "react";
 import { Grid, Pagination, Box } from "@mui/material";
 import BlogCard from "./BlogCard";
 
@@ -12,8 +14,14 @@ export default function BlogGrid({ visible, page, setPage, pageCount, glass }) {
         ))}
       </Grid>
 
+      {/* Pagination */}
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <Pagination count={pageCount} page={page} onChange={(_, v) => setPage(v)} />
+        <Pagination
+          count={pageCount}
+          page={page}
+          onChange={(_, v) => setPage(v)}
+          color="primary"
+        />
       </Box>
     </>
   );

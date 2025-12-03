@@ -44,11 +44,7 @@ export default function Article() {
 
   try {
     const res = await blogService.getBlogById(id);
-
-    if (!res.success) throw new Error("Invalid API response");
-
-    const blog = blogService.parseBlogData(res.data);
-
+    const blog = blogService.parseBlogData(res);
     setTitle(blog.title);
     setCategory(blog.category);
     setExcerpt(blog.excerpt);

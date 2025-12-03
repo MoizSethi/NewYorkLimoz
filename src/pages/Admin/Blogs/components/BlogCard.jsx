@@ -15,14 +15,14 @@ export default function BlogCard({ blog }) {
       <CardMedia
         component="img"
         height="180"
-        image={blog.cover}
+        image={blog.cover_image}
         alt={blog.title}
       />
       <CardContent sx={{ flex: 1 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
           <Chip label={blog.category} size="small" />
           <Typography variant="caption" color="text.secondary">
-            {new Date(blog.date).toLocaleDateString()}
+            {new Date(blog.createdAt).toLocaleDateString()}
           </Typography>
         </Stack>
 

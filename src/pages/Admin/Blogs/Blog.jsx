@@ -1,29 +1,32 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Grid, Stack, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import BlogCard from "./components/BlogCard";
 
-// Mock data
-const MOCK_BLOGS = new Array(5).fill(0).map((_, i) => ({
-  id: i + 1,
-  title: `Sample Blog ${i + 1}`,
-  excerpt: "This is a sample excerpt.",
-  category: ["Travel", "Guides", "Tips"][i % 3],
-  cover: `https://picsum.photos/seed/blog-${i}/400/200`,
-  date: new Date(),
-  content: "",
-}));
-
 export default function Blog() {
-  const [blogs, setBlogs] = useState(MOCK_BLOGS);
+  const [blogs, setBlogs] = useState([]);
   const navigate = useNavigate();
 
-  // Navigate to Article page for adding new blog
+  // Fetch Blogs From API
+  useEffect(() => {
+    fetch("http://localhost:3000/api/blogs")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          setBlogs(data.data);
+        } else {
+          console.warn("Invalid API response:", data);
+        }
+      })
+      .catch((err) => console.error("API Error:", err));
+  }, []);
+
+  // Add new blog
   const handleAdd = () => {
     navigate("/dashboard/blog/article/new");
   };
 
-  // Navigate to Article page for editing a blog
+  // Edit blog
   const handleEdit = (blog) => {
     navigate(`/dashboard/blog/article/${blog.id}`);
   };
