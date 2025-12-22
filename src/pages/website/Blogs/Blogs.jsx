@@ -102,7 +102,7 @@ export default function Blogs() {
       ) : (
         <Grid container spacing={4}>
           {/* Blog Grid - 80% */}
-          <Grid item xs={12} md={10}>
+          <Grid item xs={12} sm={6} md={6}>
             <BlogGrid
               visible={visible}
               page={page}

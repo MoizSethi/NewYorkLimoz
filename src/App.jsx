@@ -23,6 +23,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Service from "./pages/Admin/Services/Service";
 import Article from "./pages/Admin/Blogs/Article";
 import Blog from "./pages/Admin/Blogs/Blog";
+import Users from "./pages/Admin/Users/Users";
 
 export default function App() {
   return (
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="cars" element={<Cars />} />
           <Route path="pricing" element={<Prices />} />
           <Route path="service" element={<Service />} />
+          <Route path="users" element={<Users />} />
           
           {/* Fixed Blog Admin Routes */}
           <Route path="blog">

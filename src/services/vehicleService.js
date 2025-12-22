@@ -1,116 +1,142 @@
-// src/services/vehicleService.js
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = "http://localhost:3000/api";
 
-// Helper function to get auth headers
-const getAuthHeaders = () => {
+/* =========================
+   AUTH HEADER HELPERS
+========================= */
+
+// JSON requests (POST, PUT)
+const authJsonHeaders = () => {
   const token = localStorage.getItem("token");
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
+  if (!token) throw new Error("No authentication token found");
+
   return {
-    headers: { 
+    headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   };
 };
 
-// Vehicle CRUD operations
+// Multipart requests (Images)
+const authMultipartHeaders = () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No authentication token found");
+
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      // DO NOT set Content-Type manually for FormData
+    },
+  };
+};
+
+/* =========================
+   VEHICLE CRUD
+========================= */
+
 export const vehicleService = {
-  // Get all vehicles
   getAllVehicles: async () => {
-    const response = await axios.get(`${API_BASE_URL}/vehicles`);
-    return response.data;
+    const res = await axios.get(`${API_BASE_URL}/vehicles`);
+    return res.data;
   },
 
-  // Get vehicle by ID
   getVehicleById: async (id) => {
-    const response = await axios.get(`${API_BASE_URL}/vehicles/${id}`);
-    return response.data;
+    const res = await axios.get(`${API_BASE_URL}/vehicles/${id}`);
+    return res.data;
   },
 
-  // Create new vehicle
   createVehicle: async (vehicleData) => {
-    const response = await axios.post(`${API_BASE_URL}/vehicles`, vehicleData, getAuthHeaders());
-    return response.data;
+    const res = await axios.post(
+      `${API_BASE_URL}/vehicles`,
+      vehicleData,
+      authJsonHeaders()
+    );
+    return res.data;
   },
 
-  // Update vehicle
   updateVehicle: async (id, vehicleData) => {
-    const response = await axios.put(`${API_BASE_URL}/vehicles/${id}`, vehicleData, getAuthHeaders());
-    return response.data;
+    const res = await axios.put(
+      `${API_BASE_URL}/vehicles/${id}`,
+      vehicleData,
+      authJsonHeaders()
+    );
+    return res.data;
   },
 
-  // Delete vehicle
   deleteVehicle: async (id) => {
-    const response = await axios.delete(`${API_BASE_URL}/vehicles/${id}`, getAuthHeaders());
-    return response.data;
-  }
+    const res = await axios.delete(
+      `${API_BASE_URL}/vehicles/${id}`,
+      authJsonHeaders()
+    );
+    return res.data;
+  },
 };
 
-// Vehicle Images operations
+/* =========================
+   VEHICLE IMAGES
+========================= */
+
 export const vehicleImageService = {
-  // Get all images for a vehicle
+  // ✅ Correct route
   getVehicleImages: async (vehicleId) => {
-    const response = await axios.get(`${API_BASE_URL}/vehicles/${vehicleId}/images`);
-    return response.data;
+    const res = await axios.get(
+      `${API_BASE_URL}/vehicle-images/${vehicleId}/images`
+    );
+    return res.data;
   },
 
-  // Upload images
+  // ✅ Correct route + headers
   uploadImages: async (vehicleId, formData) => {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
-      `${API_BASE_URL}/vehicles/${vehicleId}/images`,
+    const res = await axios.post(
+      `${API_BASE_URL}/vehicle-images/${vehicleId}/images`,
       formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      }
+      authMultipartHeaders()
     );
-    return response.data;
+    return res.data;
   },
 
-  // Set default image
   setDefaultImage: async (vehicleId, imageId) => {
-    const response = await axios.patch(
-      `${API_BASE_URL}/vehicles/${vehicleId}/images/${imageId}/default`,
+    const res = await axios.patch(
+      `${API_BASE_URL}/vehicle-images/${vehicleId}/images/${imageId}/default`,
       {},
-      getAuthHeaders()
+      authJsonHeaders()
     );
-    return response.data;
+    return res.data;
   },
 
-  // Delete image
   deleteImage: async (vehicleId, imageId) => {
-    const response = await axios.delete(
-      `${API_BASE_URL}/vehicles/${vehicleId}/images/${imageId}`,
-      getAuthHeaders()
+    const res = await axios.delete(
+      `${API_BASE_URL}/vehicle-images/${vehicleId}/images/${imageId}`,
+      authJsonHeaders()
     );
-    return response.data;
-  }
+    return res.data;
+  },
 };
 
-// Error handling utility
-export const handleApiError = (error, defaultMessage) => {
+/* =========================
+   ERROR HANDLER
+========================= */
+
+export const handleApiError = (error, fallback = "Something went wrong") => {
   if (error.response?.status === 401) {
-    return { 
-      message: "Authentication failed. Please login again.", 
+    return {
+      message: "Authentication failed. Please login again.",
       type: "error",
-      redirect: true 
-    };
-  } else if (error.response?.status === 403) {
-    return { 
-      message: "Access denied. Admin privileges required.", 
-      type: "error" 
-    };
-  } else {
-    return { 
-      message: error.response?.data?.message || defaultMessage, 
-      type: "error" 
+      redirect: true,
     };
   }
+
+  if (error.response?.status === 403) {
+    return {
+      message: "Access denied. Admin privileges required.",
+      type: "error",
+    };
+  }
+
+  return {
+    message: error.response?.data?.message || fallback,
+    type: "error",
+  };
 };

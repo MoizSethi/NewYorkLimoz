@@ -200,9 +200,14 @@ export default function Cars() {
   };
 
   const getImageUrl = (image) => {
-    if (!image) return '/api/placeholder/300/200';
-    return `http://localhost:3000${image.image_url}`;
-  };
+  if (!image || !image.image_url) {
+    return "/api/placeholder/300/200";
+  }
+
+  // Always return absolute URL
+  return `http://localhost:3000${image.image_url}`;
+};
+
 
   if (loading) {
     return (

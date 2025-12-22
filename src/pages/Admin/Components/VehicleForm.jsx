@@ -1,25 +1,22 @@
-// src/components/VehicleForm.jsx
-import { useState } from "react";
 import {
   Grid,
   TextField,
   Typography,
   FormControlLabel,
   Switch,
-  Button,
-  Box
+  Box,
+  Alert
 } from "@mui/material";
-import PhotoCamera from "@mui/icons-material/PhotoCamera";
 
-const VehicleForm = ({ vehicle, onChange, onImagesChange }) => {
-  const [previewImages, setPreviewImages] = useState([]);
+import ImageUpload from "./ImageUpload";
 
+const VehicleForm = ({ vehicle, onChange, onImagesUpdate }) => {
   const features = [
     { key: "usbPowerOutlets", label: "USB Power Outlets" },
     { key: "coloredAccentLights", label: "Colored Accent Lights" },
     { key: "deluxeAudioSystem", label: "Deluxe Audio System" },
     { key: "forwardSeatingWithSeatBelts", label: "Forward Seating with Seat Belts" },
-    { key: "rearHeatACControls", label: "Rear Heat/AC Controls" },
+    { key: "rearHeatACControls", label: "Rear Heat / AC Controls" },
     { key: "eleganceStylish", label: "Elegance & Stylish" },
     { key: "extraLegroomComfortable", label: "Extra Legroom & Comfortable" }
   ];
@@ -31,19 +28,7 @@ const VehicleForm = ({ vehicle, onChange, onImagesChange }) => {
     });
   };
 
-  const handleImageSelect = (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-
-    // Preview images instantly
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setPreviewImages(previews);
-
-    // Return files to parent (for API upload)
-    if (onImagesChange) {
-      onImagesChange(files);
-    }
-  };
+  const vehicleId = vehicle?.vehicle_id;
 
   return (
     <Grid container spacing={2}>
@@ -53,9 +38,9 @@ const VehicleForm = ({ vehicle, onChange, onImagesChange }) => {
         <TextField
           label="Vehicle Name"
           fullWidth
+          required
           value={vehicle?.name || ""}
           onChange={(e) => handleChange("name", e.target.value)}
-          required
         />
       </Grid>
 
@@ -65,9 +50,11 @@ const VehicleForm = ({ vehicle, onChange, onImagesChange }) => {
           label="Seats"
           type="number"
           fullWidth
-          value={vehicle?.seats || ""}
-          onChange={(e) => handleChange("seats", e.target.value)}
           required
+          value={vehicle?.seats ?? ""}
+          onChange={(e) =>
+            handleChange("seats", Number(e.target.value))
+          }
         />
       </Grid>
 
@@ -77,26 +64,27 @@ const VehicleForm = ({ vehicle, onChange, onImagesChange }) => {
           label="Luggage Capacity"
           type="number"
           fullWidth
-          value={vehicle?.luggageCapacity || ""}
-          onChange={(e) => handleChange("luggageCapacity", e.target.value)}
           required
+          value={vehicle?.luggageCapacity ?? ""}
+          onChange={(e) =>
+            handleChange("luggageCapacity", Number(e.target.value))
+          }
         />
       </Grid>
 
-      {/* Feature Title */}
+      {/* Features */}
       <Grid item xs={12}>
-        <Typography variant="subtitle1" sx={{ mt: 1, mb: 1 }}>
+        <Typography variant="subtitle1" sx={{ mt: 1 }}>
           Features
         </Typography>
       </Grid>
 
-      {/* Feature Switches */}
-      {features.map((feature) => (
+      {features.map(feature => (
         <Grid item xs={12} key={feature.key}>
           <FormControlLabel
             control={
               <Switch
-                checked={vehicle?.[feature.key] || false}
+                checked={Boolean(vehicle?.[feature.key])}
                 onChange={(e) =>
                   handleChange(feature.key, e.target.checked)
                 }
@@ -107,48 +95,29 @@ const VehicleForm = ({ vehicle, onChange, onImagesChange }) => {
         </Grid>
       ))}
 
-      {/* Image Upload */}
+      {/* Image Upload Section */}
       <Grid item xs={12}>
         <Typography variant="subtitle1" sx={{ mt: 2 }}>
-          Upload Vehicle Images
+          Vehicle Images
         </Typography>
 
-        <input
-          id="vehicle-image-upload"
-          type="file"
-          multiple
-          accept="image/*"
-          style={{ display: "none" }}
-          onChange={handleImageSelect}
-        />
-
-        <label htmlFor="vehicle-image-upload">
-          <Button
-            variant="outlined"
-            component="span"
-            startIcon={<PhotoCamera />}
-            fullWidth
-          >
-            Select Images
-          </Button>
-        </label>
-
-        {/* Preview */}
-        {previewImages.length > 0 && (
-          <Box sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-            {previewImages.map((src, i) => (
-              <img
-                key={i}
-                src={src}
-                alt="preview"
-                width={80}
-                height={80}
-                style={{ borderRadius: 8, objectFit: "cover" }}
-              />
-            ))}
+        {/* UX Hint */}
+        {!vehicleId && (
+          <Box sx={{ mt: 1 }}>
+            <Alert severity="info">
+              Please save the vehicle first to enable image uploads.
+            </Alert>
           </Box>
         )}
+
+        <Box sx={{ mt: 2 }}>
+          <ImageUpload
+            vehicleId={vehicleId}
+            onImagesUpdate={onImagesUpdate}
+          />
+        </Box>
       </Grid>
+
     </Grid>
   );
 };

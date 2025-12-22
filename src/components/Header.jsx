@@ -16,6 +16,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
+import Logo from "../assets/logo.png";
 
 const navItems = [
   { label: "Home", path: "/" },
@@ -67,13 +68,7 @@ const Header = ({ darkMode, onThemeToggle }) => {
   return (
     <AppBar position="fixed" color="transparent" elevation={4}>
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Typography
-          variant="h6"
-          sx={{ fontWeight: "bold", cursor: "pointer" }}
-          onClick={() => navigate("/")}
-        >
-          MyBrand
-        </Typography>
+        <img src={Logo} alt="Logo" style={{ height: 80, width: 110 }} />
 
         {/* Desktop Nav */}
         <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2, alignItems: "center" }}>

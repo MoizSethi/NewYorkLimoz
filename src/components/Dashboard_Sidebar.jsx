@@ -37,7 +37,7 @@ const menuItems = [
   { text: "Blogs", link: "/dashboard/blog", icon: <ArticleIcon /> },
   { text: "Manage Drivers", link: "/dashboard/drivers", icon: <People /> },
   { text: "Set Pricing", link: "/dashboard/pricing", icon: <AttachMoney /> },
-  { text: "Analytics", link: "/dashboard/analytics", icon: <BarChart /> },
+  { text: "Users", link: "/dashboard/users", icon: <BarChart /> },
 ];
 
 export default function Dashboard_Sidebar({ mobileOpen, onMobileClose }) {
