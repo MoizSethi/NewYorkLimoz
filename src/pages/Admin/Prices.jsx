@@ -60,7 +60,7 @@ export default function Prices() {
   const fetchPrices = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:3000/api/prices");
+      const res = await axios.get("https://api.newyorklimoz.net/api/prices");
       setPrices(res.data.prices || []);
     } catch (error) {
       console.error("Error fetching prices:", error);
@@ -71,7 +71,7 @@ export default function Prices() {
 
   const fetchVehicles = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/api/vehicles");
+      const res = await axios.get("https://api.newyorklimoz.net/api/vehicles");
       setVehicles(res.data || []);
     } catch (error) {
       console.error("Error fetching vehicles:", error);
@@ -103,7 +103,7 @@ export default function Prices() {
         return;
       }
 
-      await axios.post("http://localhost:3000/api/prices", newPrice, getAuthHeaders());
+      await axios.post("https://api.newyorklimoz.net/api/prices", newPrice, getAuthHeaders());
       setOpen(false);
       resetForm();
       showToast("Price added successfully!");
@@ -126,7 +126,7 @@ export default function Prices() {
         return;
       }
 
-      await axios.put(`http://localhost:3000/api/prices/${editPrice.price_id}`, editPrice, getAuthHeaders());
+      await axios.put(`https://api.newyorklimoz.net/api/prices/${editPrice.price_id}`, editPrice, getAuthHeaders());
       setEditOpen(false);
       setEditPrice(null);
       showToast("Price updated successfully!");
@@ -140,7 +140,7 @@ export default function Prices() {
   const handleDeletePrice = async (id) => {
     if (!window.confirm("Are you sure you want to delete this price?")) return;
     try {
-      await axios.delete(`http://localhost:3000/api/prices/${id}`, getAuthHeaders());
+      await axios.delete(`https://api.newyorklimoz.net/api/prices/${id}`, getAuthHeaders());
       showToast("Price deleted successfully!");
       fetchPrices();
     } catch (error) {

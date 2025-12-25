@@ -27,7 +27,7 @@ const ImageCarousel = ({ images, defaultImage, onSetDefault, onDeleteImage }) =>
   const getImageUrl = (image) => {
     if (!image) return '/api/placeholder/300/200';
     // Use the correct field name from your backend
-    return `http://localhost:3000${image.image_url || image.url}`;
+    return `https://api.newyorklimoz.net${image.image_url || image.url}`;
   };
 
   return (

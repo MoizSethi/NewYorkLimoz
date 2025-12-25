@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/services";
+const API_URL = "https://api.newyorklimoz.net/api/services";
 
 // ---------------------------
 // GET ALL SERVICES

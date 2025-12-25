@@ -8,7 +8,7 @@ import {
   Chip,
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
-export const BASE_URL = "http://localhost:3000";
+export const BASE_URL = "https://api.newyorklimoz.net";
 export default function ServiceCard({ service, onEdit, onDelete }) {
   return (
     <Card 

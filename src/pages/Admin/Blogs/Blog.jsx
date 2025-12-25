@@ -9,7 +9,7 @@ export default function Blog() {
 
   // Fetch Blogs From API
   useEffect(() => {
-    fetch("http://localhost:3000/api/blogs")
+    fetch("https://api.newyorklimoz.net/api/blogs")
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {

@@ -1,7 +1,7 @@
 // src/services/authService.js
 import axios from "axios";
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = "https://api.newyorklimoz.net/api";
 
 // Create a reusable axios instance
 const api = axios.create({

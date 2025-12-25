@@ -205,7 +205,7 @@ export default function Cars() {
   }
 
   // Always return absolute URL
-  return `http://localhost:3000${image.image_url}`;
+  return `https://api.newyorklimoz.net${image.image_url}`;
 };
 
 

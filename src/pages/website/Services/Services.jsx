@@ -5,7 +5,7 @@ import servicesService from "../../../services/service";
 import HeroSection from "./components/HeroSection";
 import ServicesGrid from "./components/ServicesGrid";
 
-export const BASE_URL = "http://localhost:3000";
+export const BASE_URL = "https://api.newyorklimoz.net";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1502877338535-766e1452684a";

@@ -6,7 +6,7 @@ import axios from "axios";
 import HourlyRates from "./components/HourlyRates";
 import DailyRates from "./components/DailyRates";
 
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = "https://api.newyorklimoz.net/";
 
 function Rates() {
   const [vehicles, setVehicles] = useState([]);

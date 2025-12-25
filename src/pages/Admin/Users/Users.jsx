@@ -28,7 +28,7 @@ import {
 import { Edit, Delete, Add } from "@mui/icons-material";
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api";
+const API_URL = "https://api.newyorklimoz.net/api";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
