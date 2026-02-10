@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { PeopleAlt, WorkOutline } from "@mui/icons-material";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -17,33 +18,76 @@ import "slick-carousel/slick/slick-theme.css";
 // ✅ Vehicles Data
 const vehicles = [
   {
-    name: "Chevrolet Suburban SUV",
-    rate: "$120.00 Airport Rate",
-    img: "https://break2theborder.com/wp-content/uploads/2023/02/mayback-1-600x285.png",
+    name: "Luxury Cadillac XTS",
+    rate: "$69.00 Flat Hourly Rate",
+    img: "https://ideallimos.com/wp-content/uploads/2022/10/xts.png",
+    passengers: 3,
+    luggage: 3,
+  },
+  {
+    name: "Luxury Lincoln Sedan",
+    rate: "$57.00 Flat Hourly Rate",
+    img: "https://ideallimos.com/wp-content/uploads/2023/06/rsz_lincoln_sedan-e1686239134825.png",
+    passengers: 3,
+    luggage: 3,
+  },
+  {
+    name: "Luxury Chevrolet Suburban SUV",
+    rate: "$91.00 Flat Hourly Rate",
+    img: "https://ideallimos.com/wp-content/uploads/2022/10/Chevrolet-Suburban-SUV.png",
     passengers: 6,
     luggage: 6,
   },
   {
-    name: "Mercedes S580/S550",
-    rate: "$186.00 Airport Rate",
-    img: "https://break2theborder.com/wp-content/uploads/2023/02/Luxury-Lincoln-MKT-Black-Limousine.png",
+    name: "Luxury Lincoln Sedan",
+    rate: "$110.00 Flat Hourly Rate",
+    img: "https://ideallimos.com/wp-content/uploads/2022/10/Chevrolet-Suburban-SUV.png",
+    passengers: 6,
+    luggage: 6,
+  },
+  {
+    name: "Luxury Mercedes S580/S550",
+    rate: "$124.00 Flat Hourly Rate",
+    img: "https://ideallimos.com/wp-content/uploads/2022/10/s50.png",
     passengers: 3,
     luggage: 3,
   },
   {
-    name: "Mercedes C Class",
-    rate: "$164.00 Airport Rate",
-    img: "https://break2theborder.com/wp-content/uploads/2023/02/Van.png",
+    name: "Luxury Merecedes C Class",
+    rate: "$108.00 Flat Hourly Rate",
+    img: "https://ideallimos.com/wp-content/uploads/2022/10/mayback-2.png",
     passengers: 3,
     luggage: 3,
   },
   {
-    name: "Mercedes C Class",
-    rate: "$164.00 Airport Rate",
-    img: "https://break2theborder.com/wp-content/uploads/2023/02/Van.png",
-    passengers: 3,
-    luggage: 3,
+    name: "Luxury Lincoln MKT Black Limousine",
+    rate: "$165.00 Flat Hourly Rate",
+    img: "https://ideallimos.com/wp-content/uploads/2022/10/lincol-limo.png",
+    passengers: 8,
+    luggage: 5,
   },
+  {
+    name: "Luxury Stretch Hummer Limousine",
+    rate: "$350.00 Flat Hourly Rate",
+    img: "https://ideallimos.com/wp-content/uploads/2022/12/Luxury-Hummer-Limo.png",
+    passengers: 20,
+    luggage: 5,
+  },
+  {
+    name: "Luxury Mercedes Sprinter Van",
+    rate: "$175.00 Flat Hourly Rate",
+    img: "https://ideallimos.com/wp-content/uploads/2022/10/vn-1.png",
+    passengers: 14,
+    luggage: 10,
+  },
+  {
+    name: "Luxury Stretch Hummer Limousine",
+    rate: "$1470.00 Flat Hourly Rate",
+    img: "https://ideallimos.com/wp-content/uploads/2022/10/bus-2.png",
+    passengers: 50,
+    luggage: 50,
+  },
+  
 ];
 
 // ✅ Custom Arrow Buttons
@@ -75,14 +119,15 @@ const ArrowButton = ({ direction, onClick }) => (
 
 const CarCarousel = () => {
   const theme = useTheme();
+  const navigate = useNavigate(); // ← For routing
 
-  /** ✅ RIGHT-TO-LEFT SMOOTH CAROUSEL **/
+  /** ✅ Carousel Settings */
   const settings = {
     dots: true,
     infinite: true,
-    rtl: true, // ← ✅ reverse movement (right to left)
-    speed: 800, // ← smoother transition
-    cssEase: "ease-in-out", // ← premium movement
+    rtl: true,
+    speed: 800,
+    cssEase: "ease-in-out",
     autoplay: true,
     autoplaySpeed: 2500,
     slidesToShow: 3,
@@ -100,33 +145,20 @@ const CarCarousel = () => {
       {/* ✅ Section Heading */}
       <Typography
         variant="h6"
-        sx={{
-          textAlign: "center",
-          color: theme.palette.secondary.main,
-          letterSpacing: 2,
-        }}
+        sx={{ textAlign: "center", color: theme.palette.secondary.main, letterSpacing: 2 }}
       >
         WE PROVIDE UPDATED CAR
       </Typography>
 
       <Typography
         variant="h3"
-        sx={{
-          textAlign: "center",
-          fontWeight: 700,
-          mb: 7,
-        }}
+        sx={{ textAlign: "center", fontWeight: 700, mb: 7 }}
       >
         NEWLY ADDED VEHICLES
       </Typography>
 
       {/* ✅ Carousel */}
-      <Box
-        sx={{
-          ".slick-slide": { padding: "0 15px" },
-          ".slick-list": { margin: "0 -15px" },
-        }}
-      >
+      <Box sx={{ ".slick-slide": { padding: "0 15px" }, ".slick-list": { margin: "0 -15px" } }}>
         <Slider {...settings}>
           {vehicles.map((car, index) => (
             <Card
@@ -171,28 +203,14 @@ const CarCarousel = () => {
                   {car.name}
                 </Typography>
 
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: theme.palette.secondary.main,
-                    fontWeight: 600,
-                    mt: 1,
-                  }}
-                >
+                <Typography variant="body1" sx={{ color: theme.palette.secondary.main, fontWeight: 600, mt: 1 }}>
                   {car.rate}
                 </Typography>
 
                 <Box sx={{ height: 1, bgcolor: "#e5e7eb", my: 2 }} />
 
                 {/* ✅ Passenger & Luggage Info */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    color: "#6b7280",
-                    fontSize: "0.95rem",
-                  }}
-                >
+                <Box sx={{ display: "flex", justifyContent: "space-between", color: "#6b7280", fontSize: "0.95rem" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <PeopleAlt color="primary" fontSize="small" />
                     {car.passengers} Passengers
@@ -208,13 +226,8 @@ const CarCarousel = () => {
                 <Button
                   variant="contained"
                   fullWidth
-                  sx={{
-                    mt: 3,
-                    py: 1.5,
-                    borderRadius: 2,
-                    bgcolor: theme.palette.primary.main,
-                    "&:hover": { bgcolor: theme.palette.primary.dark },
-                  }}
+                  sx={{ mt: 3, py: 1.5, borderRadius: 2, bgcolor: theme.palette.primary.main, "&:hover": { bgcolor: theme.palette.primary.dark } }}
+                  onClick={() => navigate("/reservation")} // ← Navigate to /reservation
                 >
                   Book Now
                 </Button>

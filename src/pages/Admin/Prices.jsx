@@ -151,7 +151,7 @@ export default function Prices() {
 
   const handleToggleStatus = async (price) => {
     try {
-      await axios.patch(`http://localhost:3000/api/prices/${price.price_id}/toggle`, {}, getAuthHeaders());
+      await axios.patch(`https://api.newyorklimoz.net/api/prices/${price.price_id}/toggle`, {}, getAuthHeaders());
       showToast(`Price ${!price.isActive ? 'activated' : 'deactivated'} successfully!`);
       fetchPrices();
     } catch (error) {

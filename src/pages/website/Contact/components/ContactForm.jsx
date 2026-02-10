@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Box,
   Grid,
@@ -6,7 +7,9 @@ import {
   Typography,
   IconButton,
   Paper,
-  Divider
+  Divider,
+  CircularProgress,
+  Alert
 } from "@mui/material";
 
 import FacebookIcon from "@mui/icons-material/Facebook";
@@ -17,9 +20,53 @@ import InstagramIcon from "@mui/icons-material/Instagram";
 import { styles } from "./contactStyles";
 
 export default function ContactForm() {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    console.log("Form submitted");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+
+  // Handle input change
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  // Submit form
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setSuccess("");
+    setError("");
+
+    try {
+      const res = await fetch("https://api.newyorklimoz.net//api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Something went wrong");
+      }
+
+      setSuccess("Your message has been sent successfully!");
+      setFormData({ name: "", email: "", message: "" });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,27 +84,52 @@ export default function ContactForm() {
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={styles.formContainer}>
             <form onSubmit={handleSubmit}>
-              <TextField fullWidth label="Your Name" margin="normal" required />
+              <TextField
+                fullWidth
+                label="Your Name"
+                name="name"
+                margin="normal"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+
               <TextField
                 fullWidth
                 label="Your Email"
+                name="email"
                 type="email"
                 margin="normal"
+                value={formData.email}
+                onChange={handleChange}
                 required
               />
+
               <TextField
                 fullWidth
                 label="Your Message"
+                name="message"
                 margin="normal"
                 multiline
                 rows={4}
+                value={formData.message}
+                onChange={handleChange}
                 required
               />
 
               <Divider sx={{ my: 2 }} />
 
-              <Button type="submit" variant="contained" fullWidth sx={styles.submitBtn}>
-                Send Message
+              {success && <Alert severity="success">{success}</Alert>}
+              {error && <Alert severity="error">{error}</Alert>}
+
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                sx={styles.submitBtn}
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={24} /> : "Send Message"}
               </Button>
             </form>
           </Paper>

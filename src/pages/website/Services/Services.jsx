@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
+import { Box, Typography, Container, CircularProgress } from "@mui/material";
 import servicesService from "../../../services/service";
 
 import HeroSection from "./components/HeroSection";
@@ -8,44 +8,73 @@ import ServicesGrid from "./components/ServicesGrid";
 export const BASE_URL = "https://api.newyorklimoz.net";
 
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1502877338535-766e1452684a";
+  "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=2000&q=80";
 
 export default function Services() {
   const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState("loading"); // loading | success | error
+  const [error, setError] = useState("");
+
+  const fetchServices = useCallback(async () => {
+    try {
+      setStatus("loading");
+      setError("");
+
+      const data = await servicesService.getAllServices();
+      setServices(Array.isArray(data) ? data : []);
+      setStatus("success");
+    } catch (err) {
+      console.error("Failed to fetch services:", err);
+      setServices([]);
+      setError(err?.message || "Failed to load services");
+      setStatus("error");
+    }
+  }, []);
 
   useEffect(() => {
     fetchServices();
-  }, []);
-
-  const fetchServices = async () => {
-    setLoading(true);
-    try {
-      const data = await servicesService.getAllServices();
-      setServices(data);
-    } catch (err) {
-      console.error("Failed to fetch services:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" mt={10}>
-        <Typography>Loading services...</Typography>
-      </Box>
-    );
-  }
+  }, [fetchServices]);
 
   return (
-    <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
-      <HeroSection image={HERO_IMAGE} />
+    <Box sx={{ width: "100%" }}>
+      {/* Add top spacing so header doesn't overlap (adjust if your header height differs) */}
+      <Box sx={{ pt: { xs: 9, md: 10 } }}>
+        <HeroSection image={HERO_IMAGE} />
+      </Box>
 
-      <ServicesGrid
-        services={services}
-        fallbackImage={HERO_IMAGE}
-      />
+      <Container maxWidth="lg" sx={{ py: { xs: 4, md: 7 } }}>
+        {status === "loading" && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {status === "error" && (
+          <Box sx={{ textAlign: "center", py: 8 }}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+              Something went wrong
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {error}
+            </Typography>
+          </Box>
+        )}
+
+        {status === "success" && services.length === 0 && (
+          <Box sx={{ textAlign: "center", py: 8 }}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+              No services available
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Please check back soon.
+            </Typography>
+          </Box>
+        )}
+
+        {status === "success" && services.length > 0 && (
+          <ServicesGrid services={services} fallbackImage={HERO_IMAGE} />
+        )}
+      </Container>
     </Box>
   );
 }

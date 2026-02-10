@@ -1,80 +1,134 @@
-import { useState, useEffect, useMemo } from "react";
+// src/pages/website/Rates/components/DailyRates.jsx
+import { useEffect, useMemo, useState } from "react";
 import {
-  Box, Grid, Typography, Card, CardContent, CardMedia,
-  Chip, Button, IconButton, Dialog, DialogContent,
-  useTheme, useMediaQuery
+  Box,
+  Grid,
+  Typography,
+  Card,
+  CardContent,
+  Chip,
+  Button,
+  IconButton,
+  Dialog,
+  DialogContent,
+  useTheme,
+  useMediaQuery,
+  Divider,
 } from "@mui/material";
-import { 
-  Check, People, Luggage, Star, ZoomIn, 
-  Event, Business, Celebration, Tour 
+import {
+  Check,
+  People,
+  Luggage,
+  Star,
+  ZoomIn,
+  ArrowBackIos,
+  ArrowForwardIos,
+  Event,
+  Business,
+  Celebration,
+  Tour,
 } from "@mui/icons-material";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "https://api.newyorklimoz.net/";
+const BASE_URL = (import.meta.env.VITE_API_URL || "https://api.newyorklimoz.net").replace(/\/$/, "");
 
 const normalizeUrl = (url) => {
-  if (!url) return '/no-image.jpg';
-  if (url.startsWith('http')) return url;
-  return url.startsWith('/uploads') ? `${BASE_URL}${url}` : `${BASE_URL}/uploads/${url}`;
+  if (!url) return "/no-image.jpg";
+  if (url.startsWith("http")) return url;
+  // backend returns "/uploads/..."
+  if (url.startsWith("/")) return `${BASE_URL}${url}`;
+  return `${BASE_URL}/${url}`;
 };
 
-const DailyRates = ({ vehicles, prices }) => {
-  const [vehicleImages, setVehicleImages] = useState({}); // vehicle_id -> images array
+export default function DailyRates({ vehicles, prices }) {
+  const [vehicleImages, setVehicleImages] = useState({}); // vehicle_id -> [{fullUrl,...}]
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [currentVehicleId, setCurrentVehicleId] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isDownMd = useMediaQuery(theme.breakpoints.down("md"));
 
-  // Fetch images for all vehicles
+  // ✅ fetch images (same as your working code), but optimized
   useEffect(() => {
-    vehicles.forEach(async (vehicle) => {
+    if (!vehicles?.length) return;
+
+    let alive = true;
+
+    const loadAll = async () => {
       try {
-        const res = await fetch(`${BASE_URL}/api/vehicle-images/${vehicle.vehicle_id}/images`);
-        if (!res.ok) throw new Error('Failed to fetch images');
-        const data = await res.json();
-        setVehicleImages(prev => ({
-          ...prev,
-          [vehicle.vehicle_id]: data.images.map(img => ({ ...img, fullUrl: normalizeUrl(img.image_url) }))
-        }));
-      } catch (err) {
-        console.error(`Error fetching images for vehicle ${vehicle.vehicle_id}:`, err);
-        setVehicleImages(prev => ({ ...prev, [vehicle.vehicle_id]: [{ fullUrl: '/no-image.jpg' }] }));
+        const results = await Promise.all(
+          vehicles.map(async (v) => {
+            try {
+              const res = await fetch(`${BASE_URL}/api/vehicle-images/${v.vehicle_id}/images`);
+              if (!res.ok) throw new Error("Failed to fetch images");
+              const data = await res.json();
+
+              const imgs = (data?.images || []).map((img) => ({
+                ...img,
+                fullUrl: normalizeUrl(img.image_url),
+              }));
+
+              return [v.vehicle_id, imgs.length ? imgs : [{ fullUrl: "/no-image.jpg" }]];
+            } catch (err) {
+              console.error(`Error fetching images for vehicle ${v.vehicle_id}:`, err);
+              return [v.vehicle_id, [{ fullUrl: "/no-image.jpg" }]];
+            }
+          })
+        );
+
+        if (!alive) return;
+
+        const map = {};
+        results.forEach(([id, imgs]) => {
+          map[id] = imgs;
+        });
+        setVehicleImages(map);
+      } catch (e) {
+        console.error(e);
       }
-    });
+    };
+
+    loadAll();
+    return () => {
+      alive = false;
+    };
   }, [vehicles]);
 
   const dailyData = useMemo(() => {
-    return vehicles
-      .map(vehicle => {
-        const dailyPrice = prices.find(
-          price => price.vehicle_id === vehicle.vehicle_id &&
-          price.serviceType === 'daily' &&
-          price.isActive
+    return (vehicles || [])
+      .map((vehicle) => {
+        const dailyPrice = (prices || []).find(
+          (p) => p.vehicle_id === vehicle.vehicle_id && p.serviceType === "daily" && p.isActive
         );
+        if (!dailyPrice) return null;
 
-        const images = vehicleImages[vehicle.vehicle_id] || [{ fullUrl: '/no-image.jpg' }];
-        const defaultImage = images.find(img => img.is_default) || images[0];
+        const images = vehicleImages[vehicle.vehicle_id] || [{ fullUrl: "/no-image.jpg" }];
+        const defaultImage = images.find((img) => img.is_default) || images[0];
 
-        return { ...vehicle, dailyPrice, images, imageUrl: defaultImage.fullUrl };
+        return {
+          ...vehicle,
+          dailyPrice,
+          images,
+          imageUrl: defaultImage.fullUrl,
+        };
       })
-      .filter(v => v.dailyPrice);
+      .filter(Boolean);
   }, [vehicles, prices, vehicleImages]);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-  };
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 
-  const getFeatures = (v) => {
-    const features = [];
-    if (v.usbPowerOutlets) features.push("USB Power");
-    if (v.coloredAccentLights) features.push("Ambient Lighting");
-    if (v.deluxeAudioSystem) features.push("Premium Audio");
-    if (v.rearHeatACControls) features.push("Dual Climate Control");
-    if (v.eleganceStylish) features.push("Luxury Interior");
-    if (v.extraLegroomComfortable) features.push("Extra Legroom");
-    return features.slice(0, 4);
-  };
+  const getFeatures = (v) =>
+    [
+      v.usbPowerOutlets && "USB Power",
+      v.coloredAccentLights && "Ambient Lighting",
+      v.deluxeAudioSystem && "Premium Audio",
+      v.rearHeatACControls && "Dual Climate Control",
+      v.eleganceStylish && "Luxury Interior",
+      v.extraLegroomComfortable && "Extra Legroom",
+    ]
+      .filter(Boolean)
+      .slice(0, 4);
 
   const calculateSavings = (dailyPrice) => {
     const hourlyEquivalent = (dailyPrice.baseRate / 10) * 8;
@@ -90,16 +144,18 @@ const DailyRates = ({ vehicles, prices }) => {
   const handlePrevImage = () => {
     if (!currentVehicleId) return;
     const images = vehicleImages[currentVehicleId] || [];
-    setCurrentImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleNextImage = () => {
     if (!currentVehicleId) return;
     const images = vehicleImages[currentVehicleId] || [];
-    setCurrentImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
-  const handleImageError = (e) => { e.target.src = '/no-image.jpg'; };
+  const handleImageError = (e) => {
+    e.currentTarget.src = "/no-image.jpg";
+  };
 
   if (!dailyData.length) {
     return (
@@ -116,129 +172,224 @@ const DailyRates = ({ vehicles, prices }) => {
 
   return (
     <Box>
-      {/* Image Dialog */}
+      {/* ✅ Image Dialog */}
       <Dialog open={imageDialogOpen} onClose={() => setImageDialogOpen(false)} maxWidth="lg" fullWidth>
-        <DialogContent sx={{ p: 0, position: 'relative', textAlign: 'center' }}>
-          {currentVehicleId && vehicleImages[currentVehicleId] && vehicleImages[currentVehicleId].length > 0 && (
-            <>
-              <img
-                src={vehicleImages[currentVehicleId][currentImageIndex].fullUrl}
-                alt="Vehicle"
-                style={{ width: '100%', height: 'auto', maxHeight: '80vh', objectFit: 'contain' }}
-                onError={handleImageError}
-              />
-              {vehicleImages[currentVehicleId].length > 1 && (
-                <>
-                  <IconButton sx={{ position: 'absolute', top: '50%', left: 8, bgcolor: 'background.paper' }} onClick={handlePrevImage}>
-                    <ArrowBackIos />
-                  </IconButton>
-                  <IconButton sx={{ position: 'absolute', top: '50%', right: 8, bgcolor: 'background.paper' }} onClick={handleNextImage}>
-                    <ArrowForwardIos />
-                  </IconButton>
-                </>
-              )}
-            </>
-          )}
+        <DialogContent sx={{ p: 0, position: "relative", textAlign: "center" }}>
+          {currentVehicleId &&
+            vehicleImages[currentVehicleId] &&
+            vehicleImages[currentVehicleId].length > 0 && (
+              <>
+                <img
+                  src={vehicleImages[currentVehicleId][currentImageIndex].fullUrl}
+                  alt="Vehicle"
+                  style={{
+                    width: "100%",
+                    height: "auto",
+                    maxHeight: "80vh",
+                    objectFit: "contain",
+                    background: "#000",
+                  }}
+                  onError={handleImageError}
+                />
+
+                {vehicleImages[currentVehicleId].length > 1 && (
+                  <>
+                    <IconButton
+                      sx={{
+                        position: "absolute",
+                        top: "50%",
+                        left: 10,
+                        bgcolor: "background.paper",
+                      }}
+                      onClick={handlePrevImage}
+                    >
+                      <ArrowBackIos />
+                    </IconButton>
+                    <IconButton
+                      sx={{
+                        position: "absolute",
+                        top: "50%",
+                        right: 10,
+                        bgcolor: "background.paper",
+                      }}
+                      onClick={handleNextImage}
+                    >
+                      <ArrowForwardIos />
+                    </IconButton>
+                  </>
+                )}
+              </>
+            )}
         </DialogContent>
       </Dialog>
 
-      {/* Info Banner */}
-      <Card sx={{ 
-        background: theme.palette.mode === 'light' 
-          ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
-          : `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
-        color: 'white',
-        mb: 6,
-        borderRadius: 2
-      }}>
-        <CardContent sx={{ textAlign: 'center', py: 6 }}>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, fontSize: isMobile ? '2rem' : '2.5rem' }}>
+      {/* ✅ Banner */}
+      <Card
+        sx={{
+          background:
+            theme.palette.mode === "light"
+              ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+              : `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+          color: "white",
+          mb: 6,
+          borderRadius: 3,
+        }}
+      >
+        <CardContent sx={{ textAlign: "center", py: 6 }}>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ fontWeight: 800, fontSize: isDownMd ? "2rem" : "2.6rem" }}
+          >
             📅 Daily Service
           </Typography>
-          <Typography variant="h6" sx={{ opacity: 0.9, fontWeight: 400, fontSize: isMobile ? '0.8rem' : '1rem', maxWidth: 800, mx: 'auto', lineHeight: 1.6 }}>
-            Perfect for full-day events, corporate travel, and weddings. Minimum 10 hours with 30% business discount included!
+          <Typography
+            sx={{
+              opacity: 0.92,
+              fontWeight: 500,
+              fontSize: isDownMd ? "0.95rem" : "1.05rem",
+              maxWidth: 820,
+              mx: "auto",
+              lineHeight: 1.7,
+            }}
+          >
+            Perfect for full-day events, corporate travel, and weddings. Minimum 10 hours with business discount included.
           </Typography>
         </CardContent>
       </Card>
 
-      {/* Vehicles Grid */}
-      <Grid container spacing={3}>
-        {dailyData.map(vehicle => {
+      {/* ✅ Professional Grid: 1/2/3 columns */}
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
+        {dailyData.map((vehicle) => {
           const savings = calculateSavings(vehicle.dailyPrice);
-          const features = getFeatures(vehicle);
-          const originalPrice = vehicle.dailyPrice.baseRate / 0.7;
+          const feats = getFeatures(vehicle);
 
           return (
-            <Grid item xs={12} md={6} lg={4} key={vehicle.vehicle_id}>
-              <Card sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'relative',
-                transition: 'all 0.3s ease-in-out',
-                borderRadius: 2,
-                overflow: 'hidden',
-                bgcolor: 'background.paper',
-                '&:hover': { transform: 'translateY(-4px)', boxShadow: theme.shadows[8] }
-              }}>
-                <Box sx={{ position: 'relative', overflow: 'hidden' }}>
-                  <CardMedia
+            <Grid item xs={12} sm={6} md={4} key={vehicle.vehicle_id}>
+              <Card
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  borderRadius: 3,
+                  overflow: "hidden",
+                  transition: "transform .25s ease, box-shadow .25s ease",
+                  boxShadow: "0 10px 28px rgba(0,0,0,0.08)",
+                  "&:hover": { transform: "translateY(-6px)", boxShadow: "0 18px 40px rgba(0,0,0,0.12)" },
+                }}
+              >
+                {/* ✅ FIX ALIGNMENT: centered image stage */}
+                <Box
+                  sx={{
+                    position: "relative",
+                    height: 220,
+                    bgcolor: "#f7f7f8",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    p: 2,
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                  }}
+                >
+                  <Box
                     component="img"
-                    height="220"
-                    image={vehicle.imageUrl}
+                    src={vehicle.imageUrl}
                     alt={vehicle.name}
                     onError={handleImageError}
-                    sx={{ objectFit: 'cover', transition: 'transform 0.3s ease', '&:hover': { transform: 'scale(1.05)' } }}
+                    loading="lazy"
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain", // ✅ key change
+                      objectPosition: "center",
+                      filter: "drop-shadow(0 10px 16px rgba(0,0,0,0.10))",
+                    }}
                   />
+
                   <IconButton
-                    sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'background.paper', '&:hover': { bgcolor: 'background.default' } }}
+                    sx={{
+                      position: "absolute",
+                      top: 10,
+                      right: 10,
+                      bgcolor: "rgba(255,255,255,0.92)",
+                      "&:hover": { bgcolor: "rgba(255,255,255,1)" },
+                    }}
                     onClick={() => handleImageClick(vehicle.vehicle_id)}
                   >
                     <ZoomIn />
                   </IconButton>
+
                   {savings > 0 && (
                     <Chip
                       icon={<Star />}
                       label={`Save ${formatCurrency(savings)}`}
-                      color="secondary"
-                      sx={{ position: 'absolute', top: 8, left: 8, fontWeight: 600, bgcolor: 'secondary.main', color: 'white' }}
+                      sx={{
+                        position: "absolute",
+                        top: 10,
+                        left: 10,
+                        fontWeight: 800,
+                        bgcolor: "rgba(17,17,17,0.90)",
+                        color: "#fff",
+                      }}
                     />
                   )}
                 </Box>
 
-                <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                  <Box textAlign="center" mb={2}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main', mb: 1 }}>
-                      {vehicle.name}
+                <CardContent sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 900, textAlign: "center" }}>
+                    {vehicle.name}
+                  </Typography>
+
+                  <Box textAlign="center" sx={{ mt: 1.5 }}>
+                    <Typography variant="h4" sx={{ fontWeight: 900, color: "secondary.main", lineHeight: 1 }}>
+                      {formatCurrency(vehicle.dailyPrice.totalPrice)}
                     </Typography>
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="h4" sx={{ fontWeight: 700, color: 'secondary.main', lineHeight: 1 }}>
-                        {formatCurrency(vehicle.dailyPrice.totalPrice)}
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.7, fontWeight: 700 }}>
+                      per day • 10+ hours
+                    </Typography>
+                  </Box>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: 3,
+                      py: 1.2,
+                      bgcolor: "background.default",
+                      borderRadius: 2,
+                      mb: 2,
+                    }}
+                  >
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <People sx={{ color: "primary.main" }} />
+                      <Typography variant="body2" fontWeight={800}>
+                        {vehicle.seats} seats
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, mt: 0.5 }}>per day • 10+ hours</Typography>
-                      <Box sx={{ mt: 0.5 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ textDecoration: 'line-through', mr: 1 }}>
-                          {formatCurrency(originalPrice)}
-                        </Typography>
-                        <Typography variant="caption" color="secondary.main" sx={{ fontWeight: 600 }}>You save 30%</Typography>
-                      </Box>
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Luggage sx={{ color: "primary.main" }} />
+                      <Typography variant="body2" fontWeight={800}>
+                        {vehicle.luggageCapacity} bags
+                      </Typography>
                     </Box>
                   </Box>
 
-                  <Box display="flex" justifyContent="center" gap={3} mb={2} sx={{ py: 1.5, bgcolor: 'background.default', borderRadius: 1 }}>
-                    <Box display="flex" alignItems="center" gap={1}><People sx={{ color: 'primary.main' }} /><Typography variant="body2" fontWeight={500}>{vehicle.seats} seats</Typography></Box>
-                    <Box display="flex" alignItems="center" gap={1}><Luggage sx={{ color: 'primary.main' }} /><Typography variant="body2" fontWeight={500}>{vehicle.luggageCapacity} bags</Typography></Box>
-                  </Box>
-
-                  {features.length > 0 && (
-                    <Box mb={2}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>Premium Features:</Typography>
+                  {feats.length > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1 }}>
+                        Premium Features
+                      </Typography>
                       <Grid container spacing={0.5}>
-                        {features.map((f, i) => (
+                        {feats.map((f, i) => (
                           <Grid item xs={6} key={i}>
-                            <Box display="flex" alignItems="center" gap={0.5}>
-                              <Check sx={{ fontSize: 16, color: 'secondary.main' }} />
-                              <Typography variant="body2" fontSize="0.8rem">{f}</Typography>
+                            <Box display="flex" alignItems="center" gap={0.6}>
+                              <Check sx={{ fontSize: 16, color: "secondary.main" }} />
+                              <Typography variant="body2" sx={{ fontSize: 13 }}>
+                                {f}
+                              </Typography>
                             </Box>
                           </Grid>
                         ))}
@@ -246,47 +397,74 @@ const DailyRates = ({ vehicles, prices }) => {
                     </Box>
                   )}
 
-                  <Box sx={{ bgcolor: 'primary.50', p: 2, borderRadius: 1, border: '1px solid', borderColor: 'primary.100' }}>
-                    <Typography variant="caption" fontWeight={600} display="block" color="primary.dark" mb={0.5}>🎯 PERFECT FOR:</Typography>
-                    <Typography variant="caption" color="primary.dark">Corporate Events • Weddings • Full Day Tours • Business Travel</Typography>
+                  <Box sx={{ mt: "auto" }}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      size="large"
+                      component="a"
+                      href={`/reservation?vehicle=${vehicle.vehicle_id}&type=daily`}
+                      sx={{
+                        py: 1.35,
+                        fontWeight: 900,
+                        borderRadius: 2,
+                        textTransform: "none",
+                        bgcolor: "secondary.main",
+                        "&:hover": { bgcolor: "secondary.dark" },
+                      }}
+                    >
+                      Book Daily Service
+                    </Button>
                   </Box>
                 </CardContent>
-
-                <Box sx={{ p: 3, pt: 0 }}>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    size="large"
-                    component="a"
-                    href={`/reservation?vehicle=${vehicle.vehicle_id}&type=daily`}
-                    sx={{ py: 1.5, fontWeight: 500, borderRadius: 1, bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
-                  >
-                    Book Daily Service
-                  </Button>
-                </Box>
               </Card>
             </Grid>
           );
         })}
       </Grid>
 
-      {/* Benefits Section */}
+      {/* Benefits */}
       <Box sx={{ mt: 8 }}>
-        <Typography variant="h4" textAlign="center" gutterBottom sx={{ fontWeight: 600, mb: 4, color: 'primary.main' }}>
+        <Typography variant="h4" textAlign="center" sx={{ fontWeight: 900, mb: 4 }}>
           Why Choose Daily Service?
         </Typography>
+
         <Grid container spacing={3}>
           {[
-            { icon: <Event sx={{ fontSize: 40 }} />, title: "10+ Hours Coverage", description: "Full-day service perfect for events, tours, and business meetings with complete flexibility.", color: "primary" },
-            { icon: <Business sx={{ fontSize: 40 }} />, title: "30% Business Discount", description: "Exclusive discount automatically applied to all daily bookings. Best value guaranteed.", color: "secondary" },
-            { icon: <Celebration sx={{ fontSize: 40 }} />, title: "Special Event Ready", description: "Perfect for weddings, anniversaries, and celebrations with premium vehicles.", color: "primary" },
-            { icon: <Tour sx={{ fontSize: 40 }} />, title: "City Tour Package", description: "Explore the city at your own pace with our full-day tour package.", color: "secondary" }
-          ].map((benefit, i) => (
+            {
+              icon: <Event sx={{ fontSize: 40 }} />,
+              title: "10+ Hours Coverage",
+              description: "Full-day flexibility for events, tours, and meetings.",
+              color: "primary",
+            },
+            {
+              icon: <Business sx={{ fontSize: 40 }} />,
+              title: "Business Discount",
+              description: "Best value for long bookings and corporate travel.",
+              color: "secondary",
+            },
+            {
+              icon: <Celebration sx={{ fontSize: 40 }} />,
+              title: "Event Ready",
+              description: "Perfect for weddings, parties, and special occasions.",
+              color: "primary",
+            },
+            {
+              icon: <Tour sx={{ fontSize: 40 }} />,
+              title: "City Tours",
+              description: "Explore NYC at your own pace with a premium ride.",
+              color: "secondary",
+            },
+          ].map((b, i) => (
             <Grid item xs={12} md={6} key={i}>
-              <Card sx={{ height: '100%', p: 3, textAlign: 'center', borderRadius: 2, bgcolor: 'background.paper' }}>
-                <Box sx={{ color: `${benefit.color}.main`, mb: 2 }}>{benefit.icon}</Box>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>{benefit.title}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5 }}>{benefit.description}</Typography>
+              <Card sx={{ height: "100%", p: 3, textAlign: "center", borderRadius: 3 }}>
+                <Box sx={{ color: `${b.color}.main`, mb: 2 }}>{b.icon}</Box>
+                <Typography variant="h6" sx={{ fontWeight: 900, mb: 0.5 }}>
+                  {b.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+                  {b.description}
+                </Typography>
               </Card>
             </Grid>
           ))}
@@ -294,6 +472,4 @@ const DailyRates = ({ vehicles, prices }) => {
       </Box>
     </Box>
   );
-};
-
-export default DailyRates;
+}
